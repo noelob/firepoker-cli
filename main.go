@@ -30,7 +30,6 @@ func main() {
 			//println("MessageType is ", mt.String())
 			println("<<< " + string(bytes))
 		}
-		cancel()
 	}()
 
 	ticker := time.NewTicker(10 * time.Second)
