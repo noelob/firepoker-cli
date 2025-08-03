@@ -1,13 +1,21 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"github.com/coder/websocket"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
+
+func wait() {
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
+	//fmt.Println("Blocking, press ctrl+c to continue...")
+	<-done // Will block here until user hits ctrl+c
+}
 
 func main() {
 	appCtx, appCtxCancel := context.WithCancel(context.Background())
@@ -18,17 +26,18 @@ func main() {
 
 	go func() {
 		// Allows this go routine to read indefinitely until the application cancels its context (i.e. shuts down)
-		ctx, cancel := context.WithCancel(appCtx)
-		defer cancel()
-		//fmt.Println("Reading response(s) (1)")
-		_, bytes, err := c.Read(ctx)
-		if err != nil {
-			msg := fmt.Sprintf("<<< Unable to read from websocket: %v", err)
-			fmt.Println(msg)
-			//break
-		} else {
-			//println("MessageType is ", mt.String())
+		for {
+			ctx, cancel := context.WithCancel(appCtx)
+			//fmt.Println("Reading response(s) (1)")
+			_, bytes, err := c.Read(ctx)
+			if err != nil {
+				msg := fmt.Sprintf("<<< Unable to read from websocket: %v", err)
+				fmt.Println(msg)
+				cancel()
+				break
+			}
 			println("<<< " + string(bytes))
+			cancel()
 		}
 	}()
 
@@ -43,9 +52,8 @@ func main() {
 
 	join(c, appCtx)
 
-	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Print("Hit Enter to exit program: ")
-	scanner.Scan()
+	// Wait until the user closes the application
+	wait()
 
 	// This should cancel all derived contexts (i.e. )
 	appCtxCancel()
