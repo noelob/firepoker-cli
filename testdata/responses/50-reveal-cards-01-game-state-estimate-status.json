@@ -1,0 +1,87 @@
+{
+  "t": "d",
+  "d": {
+    "b": {
+      "p": "games/d2538816-2f8e-a8b0-6534-30857b5e932d",
+      "d": {
+        "created": 1754172217746,
+        "deck": 0,
+        "description": "The Game Description",
+        "estimate": {
+          "endedAt": false,
+          "id": 1,
+          "results": {
+            "0": {
+              "points": 8,
+              "user": {
+                "fullname": "John",
+                "id": "b01f4c74-9eef-86aa-ac09-02a727ca1d31"
+              }
+            },
+            "1": {
+              "points": 2,
+              "user": {
+                "fullname": "Admin",
+                "id": "31d8c788-0105-7854-e577-f08aa28a9024"
+              }
+            }
+          },
+          "startedAt": 1754173976703,
+          "status": "reveal",
+          "title": "Story 2"
+        },
+        "name": "The Game Name",
+        "owner": {
+          "fullname": "Admin",
+          "id": "31d8c788-0105-7854-e577-f08aa28a9024"
+        },
+        "participants": {
+          "31d8c788-0105-7854-e577-f08aa28a9024": {
+            "fullname": "Admin",
+            "hasVoted": true,
+            "id": "31d8c788-0105-7854-e577-f08aa28a9024",
+            "online": true
+          },
+          "b01f4c74-9eef-86aa-ac09-02a727ca1d31": {
+            "fullname": "John",
+            "hasVoted": true,
+            "id": "b01f4c74-9eef-86aa-ac09-02a727ca1d31",
+            "online": 1754796071539
+          },
+          "fe24478e-0161-0c97-18ef-ab569207ac44": {
+            "fullname": "go-cli",
+            "id": "fe24478e-0161-0c97-18ef-ab569207ac44",
+            "online": true
+          },
+          "ff7f32af-455c-45e1-601d-79e6488d6887": {
+            "fullname": "John Doe",
+            "id": "ff7f32af-455c-45e1-601d-79e6488d6887",
+            "online": true
+          }
+        },
+        "status": "active",
+        "stories": {
+          "0": {
+            "endedAt": false,
+            "id": 0,
+            "startedAt": false,
+            "status": "queue",
+            "title": "Story 1"
+          },
+          "1": {
+            "endedAt": false,
+            "id": 1,
+            "startedAt": 1754173976703,
+            "status": "active",
+            "title": "Story 2"
+          },
+          "2": {
+            "status": "queue",
+            "title": "Story 2"
+          }
+        }
+      }
+    },
+    "a": "d"
+  }
+}
