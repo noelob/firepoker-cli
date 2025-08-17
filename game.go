@@ -87,7 +87,7 @@ func (g *Game) Leave() error {
 	// This cancels all derived contexts (i.e. sending and receiving messages)
 	g.ctxCancel()
 
-	// Stop heartbeat ticket
+	// Stop heartbeat ticker
 	g.heartbeat.Stop()
 
 	// close conn
@@ -114,7 +114,8 @@ func keepalive(g *Game) {
 func listen(g *Game) {
 	for {
 		ctx, cancel := context.WithCancel(g.ctx)
-		//fmt.Println("Reading response(s) (1)")
+
+		// Blocks until a message is received or the context is cancelled.
 		_, bytes, err := g.conn.Read(ctx)
 		if err != nil {
 			if !errors.Is(err, context.Canceled) {
@@ -124,7 +125,28 @@ func listen(g *Game) {
 			cancel()
 			break
 		}
-		println("<<< " + string(bytes))
+
+		message, err := ParseMessage(bytes)
+		if err != nil {
+			msg := fmt.Sprintf("<<< Error parsing message: %v: %s", err, string(bytes))
+			fmt.Println(msg)
+		} else {
+			switch message.(type) {
+			case Handshake:
+				fmt.Printf("<<< Received Handshake: %+v\n", message)
+			case Acknowledgement:
+				fmt.Printf("<<< Received Acknowledgement: %+v\n", message)
+			case User:
+				fmt.Printf("<<< Received User (has joined the game): %+v\n", message)
+			case Presence:
+				fmt.Printf("<<< Received Presence (online/offline): %+v\n", message)
+			case GameState:
+				fmt.Printf("<<< Received GameState: %+v\n", message)
+			default:
+				fmt.Printf("<<< Received message: %+v\n", message)
+			}
+		}
+
 		cancel()
 	}
 }
