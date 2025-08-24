@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	game := NewGame("d2538816-2f8e-a8b0-6534-30857b5e932d")
+	game := NewGame()
 	defer game.Leave()
 
 	err := game.Connect()
@@ -18,7 +18,7 @@ func main() {
 		panic(err)
 	}
 
-	err = game.Join()
+	err = game.Join("d2538816-2f8e-a8b0-6534-30857b5e932d")
 	if err != nil {
 		msg := fmt.Sprintf("Unable to join the game: %v", err)
 		fmt.Println(msg)

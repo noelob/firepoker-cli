@@ -35,9 +35,9 @@ type Game struct {
 	participants []participant
 }
 
-func NewGame(id string) *Game {
+func NewGame() *Game {
 	ctx, ctxCancel := context.WithCancel(context.Background())
-	return &Game{ctx: ctx, ctxCancel: ctxCancel, id: id, heartbeat: time.NewTicker(45 * time.Second)}
+	return &Game{ctx: ctx, ctxCancel: ctxCancel, heartbeat: time.NewTicker(45 * time.Second)}
 }
 
 func (g *Game) Connect() error {
@@ -71,7 +71,9 @@ func (g *Game) Connect() error {
 	return nil
 }
 
-func (g *Game) Join() error {
+func (g *Game) Join(id string) error {
+	g.id = id
+
 	// join game
 	g.send(`{"t":"d","d":{"r":1,"a":"l","b":{"p":"/games/d2538816-2f8e-a8b0-6534-30857b5e932d","h":""}}}`)
 	g.send(`{"t":"d","d":{"r":2,"a":"p","b":{"p":"/games/d2538816-2f8e-a8b0-6534-30857b5e932d/participants/fe24478e-0161-0c97-18ef-ab569207ac44","d":{"fullname":"go-cli","id":"fe24478e-0161-0c97-18ef-ab569207ac44"}}}}`)
