@@ -19,14 +19,7 @@ func main() {
 	game := NewGame()
 	defer game.Leave()
 
-	err := game.Connect()
-	if err != nil {
-		msg := fmt.Sprintf("Unable to connect to websocket: %v", err)
-		fmt.Println(msg)
-		panic(err)
-	}
-
-	err = game.Join(gameId)
+	err := game.Join(gameId)
 	if err != nil {
 		msg := fmt.Sprintf("Unable to join the game: %v", err)
 		fmt.Println(msg)
