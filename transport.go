@@ -14,11 +14,12 @@ type Transport struct {
 	heartbeat *time.Ticker
 	conn      *websocket.Conn
 
-	ack chan Acknowledgement
+	ack    chan Acknowledgement
+	events chan GameState
 }
 
-func NewTransport(ctx context.Context) *Transport {
-	return &Transport{ctx: ctx, heartbeat: time.NewTicker(45 * time.Second), ack: make(chan Acknowledgement, 5)}
+func NewTransport(ctx context.Context, events chan GameState) *Transport {
+	return &Transport{ctx: ctx, heartbeat: time.NewTicker(45 * time.Second), ack: make(chan Acknowledgement, 5), events: events}
 }
 
 func (t *Transport) Connect() error {
@@ -56,6 +57,7 @@ func (t *Transport) Disconnect() error {
 	fmt.Println("Disconnecting..")
 
 	close(t.ack)
+	close(t.events)
 
 	// Stop heartbeat ticker
 	t.heartbeat.Stop()
@@ -140,6 +142,8 @@ func listen(t *Transport) {
 				fmt.Printf("<<< Received Presence (online/offline): %+v\n", message)
 			case GameState:
 				fmt.Printf("<<< Received GameState: %+v\n", message)
+				fmt.Printf("<<< Sending on Events channel\n")
+				t.events <- msg
 			default:
 				fmt.Printf("<<< Received message: %+v\n", message)
 			}

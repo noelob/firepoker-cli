@@ -22,17 +22,22 @@ type Game struct {
 
 	transport *Transport
 
-	id           string
+	id    string
+	state GameState
+
 	name         string
 	description  string
 	stories      []story
 	deck         deck
 	participants []participant
+
+	events chan GameState
 }
 
 func NewGame() *Game {
 	ctx, ctxCancel := context.WithCancel(context.Background())
-	return &Game{ctx: ctx, ctxCancel: ctxCancel, transport: NewTransport(ctx)}
+	events := make(chan GameState)
+	return &Game{ctx: ctx, ctxCancel: ctxCancel, events: events, transport: NewTransport(ctx, events)}
 }
 
 func (g *Game) Join(id string) error {
@@ -44,6 +49,8 @@ func (g *Game) Join(id string) error {
 			return err
 		}
 	}
+
+	go update(g)
 
 	// join game
 	g.transport.Send(1, fmt.Sprintf(`{"t":"d","d":{"r":1,"a":"l","b":{"p":"/games/%s","h":""}}}`, id))
@@ -62,4 +69,13 @@ func (g *Game) Leave() error {
 
 	// close conn
 	return g.transport.Disconnect()
+}
+
+func update(g *Game) {
+	fmt.Println("Waiting for game updates")
+	for event := range g.events {
+		fmt.Println("Game update received, updating...")
+		g.state = event
+	}
+	fmt.Println("Update channel closed")
 }
