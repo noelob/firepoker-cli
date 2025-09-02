@@ -5,33 +5,15 @@ import (
 	"fmt"
 )
 
-type deck struct {
-	name   string
-	values []string
-}
-
-type story string
-
-type participant struct {
-	name string
-}
-
 type Game struct {
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 
 	transport *Transport
+	events    chan GameState
 
 	id    string
 	state GameState
-
-	name         string
-	description  string
-	stories      []story
-	deck         deck
-	participants []participant
-
-	events chan GameState
 }
 
 func NewGame() *Game {
