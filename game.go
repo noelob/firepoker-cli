@@ -77,10 +77,10 @@ func (g *Game) Join(id string) error {
 	g.id = id
 
 	// join game
-	g.send(1, `{"t":"d","d":{"r":1,"a":"l","b":{"p":"/games/d2538816-2f8e-a8b0-6534-30857b5e932d","h":""}}}`)
-	g.send(2, `{"t":"d","d":{"r":2,"a":"p","b":{"p":"/games/d2538816-2f8e-a8b0-6534-30857b5e932d/participants/fe24478e-0161-0c97-18ef-ab569207ac44","d":{"fullname":"go-cli","id":"fe24478e-0161-0c97-18ef-ab569207ac44"}}}}`)
-	g.send(3, `{"t":"d","d":{"r":3,"a":"o","b":{"p":"/games/d2538816-2f8e-a8b0-6534-30857b5e932d/participants/fe24478e-0161-0c97-18ef-ab569207ac44/online","d":{".sv":"timestamp"}}}}`)
-	g.send(4, `{"t":"d","d":{"r":4,"a":"p","b":{"p":"/games/d2538816-2f8e-a8b0-6534-30857b5e932d/participants/fe24478e-0161-0c97-18ef-ab569207ac44/online","d":true}}}`)
+	g.send(1, fmt.Sprintf(`{"t":"d","d":{"r":1,"a":"l","b":{"p":"/games/%s","h":""}}}`, id))
+	g.send(2, fmt.Sprintf(`{"t":"d","d":{"r":2,"a":"p","b":{"p":"/games/%s/participants/fe24478e-0161-0c97-18ef-ab569207ac44","d":{"fullname":"go-cli","id":"fe24478e-0161-0c97-18ef-ab569207ac44"}}}}`, id))
+	g.send(3, fmt.Sprintf(`{"t":"d","d":{"r":3,"a":"o","b":{"p":"/games/%s/participants/fe24478e-0161-0c97-18ef-ab569207ac44/online","d":{".sv":"timestamp"}}}}`, id))
+	g.send(4, fmt.Sprintf(`{"t":"d","d":{"r":4,"a":"p","b":{"p":"/games/%s/participants/fe24478e-0161-0c97-18ef-ab569207ac44/online","d":true}}}`, id))
 
 	return nil
 }

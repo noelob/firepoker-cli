@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -8,6 +9,13 @@ import (
 )
 
 func main() {
+	flag.Parse()
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
+		flag.PrintDefaults()
+	}
+	gameId := flag.Arg(0)
+
 	game := NewGame()
 	defer game.Leave()
 
@@ -18,7 +26,7 @@ func main() {
 		panic(err)
 	}
 
-	err = game.Join("d2538816-2f8e-a8b0-6534-30857b5e932d")
+	err = game.Join(gameId)
 	if err != nil {
 		msg := fmt.Sprintf("Unable to join the game: %v", err)
 		fmt.Println(msg)
