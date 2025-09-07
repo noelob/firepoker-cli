@@ -26,8 +26,13 @@ func main() {
 		panic(err)
 	}
 
+	app := buildUi(game)
+	if err := app.Run(); err != nil {
+		fmt.Printf("Error running application: %s\n", err)
+	}
+
 	// Wait until the user closes the application
-	wait()
+	//wait()
 }
 
 func wait() {
