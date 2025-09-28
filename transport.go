@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/coder/websocket"
+	"log/slog"
 	"time"
 )
 
@@ -28,7 +29,7 @@ func (t *Transport) Connect() error {
 	ctx, cancel := context.WithTimeout(t.ctx, 5*time.Second)
 	defer cancel()
 
-	fmt.Println("Opening websocket")
+	slog.Info("Opening websocket")
 
 	c, _, err := websocket.Dial(ctx, "wss://firepoker-75089.firebaseio.com/.ws?v=5", nil)
 	//c, _, err := websocket.Dial(ctx, "wss://s-usc1b-nss-2107.firebaseio.com/.ws?v=5&ns=firepoker-75089", nil)
@@ -39,7 +40,7 @@ func (t *Transport) Connect() error {
 
 	t.conn = c
 
-	fmt.Println("Establishing heartbeat")
+	slog.Info("Establishing heartbeat")
 	go func() {
 		for range t.heartbeat.C {
 			keepalive(t)
@@ -47,14 +48,14 @@ func (t *Transport) Connect() error {
 	}()
 
 	// start listening for messages
-	fmt.Println("Listening for messages")
+	slog.Info("Listening for messages")
 	go listen(t)
 
 	return nil
 }
 
 func (t *Transport) Disconnect() error {
-	fmt.Println("Disconnecting..")
+	slog.Info("Disconnecting..")
 
 	close(t.ack)
 	close(t.events)
@@ -63,7 +64,7 @@ func (t *Transport) Disconnect() error {
 	t.heartbeat.Stop()
 
 	// close conn
-	fmt.Println("Closing websocket")
+	slog.Info("Closing websocket")
 	return t.conn.Close(websocket.StatusNormalClosure, "")
 }
 
@@ -71,7 +72,7 @@ func (t *Transport) Send(ref int, payload string) error {
 	ctx, cancel := context.WithTimeout(t.ctx, 5*time.Second)
 	defer cancel()
 
-	println(">>> " + payload)
+	slog.Debug(">>> " + payload)
 	err := t.conn.Write(ctx, websocket.MessageText, []byte(payload))
 	if err != nil {
 		return err
@@ -80,17 +81,17 @@ func (t *Transport) Send(ref int, payload string) error {
 	// Block until an ack message is received
 	if ref > 0 {
 		for {
-			fmt.Printf(">>>> awaiting acknowledgement...\n")
+			slog.Debug(">>>> awaiting acknowledgement...")
 			ack := <-t.ack
 			if ack.Ref == uint16(ref) {
 				if ack.S == "ok" {
-					fmt.Printf(">>>> message with ref %d acknowledged\n", ref)
+					slog.Debug(fmt.Sprintf(">>>> message with ref %d acknowledged", ref))
 					return nil
 				} else {
 					return Error("unknown acknowledgement status: " + ack.S)
 				}
 			} else {
-				fmt.Printf(">>>> unexpected acknowledgement received; expected %d, discarding: %v\n", ref, ack)
+				slog.Warn(fmt.Sprintf(">>>> unexpected acknowledgement received; expected %d, discarding: %v", ref, ack))
 			}
 		}
 	}
@@ -104,8 +105,7 @@ func (t *Transport) IsConnected() bool {
 func keepalive(t *Transport) {
 	err := t.Send(0, "0")
 	if err != nil {
-		msg := fmt.Sprintf(">>> Unable to Send keepalive: %v", err)
-		fmt.Printf(msg)
+		slog.Warn(fmt.Sprintf(">>> Unable to Send keepalive: %v", err))
 	}
 }
 
@@ -117,8 +117,7 @@ func listen(t *Transport) {
 		_, bytes, err := t.conn.Read(ctx)
 		if err != nil {
 			if !errors.Is(err, context.Canceled) {
-				msg := fmt.Sprintf("<<< Unable to read from websocket: %v", err)
-				fmt.Println(msg)
+				slog.Error(fmt.Sprintf("<<< Unable to read from websocket: %v", err))
 			}
 			cancel()
 			break
@@ -126,26 +125,25 @@ func listen(t *Transport) {
 
 		message, err := ParseMessage(bytes)
 		if err != nil {
-			msg := fmt.Sprintf("<<< Error parsing message: %v: %s", err, string(bytes))
-			fmt.Println(msg)
+			slog.Error(fmt.Sprintf("<<< Error parsing message: %v: %s", err, string(bytes)))
 		} else {
 			switch msg := message.(type) {
 			case Handshake:
-				fmt.Printf("<<< Received Handshake: %+v\n", message)
+				slog.Debug(fmt.Sprintf("<<< Received Handshake: %+v", message))
 			case Acknowledgement:
-				fmt.Printf("<<< Received Acknowledgement: %+v\n", message)
-				fmt.Printf("<<< Sending on Acknowledgement channel\n")
+				slog.Debug(fmt.Sprintf("<<< Received Acknowledgement: %+v", message))
+				slog.Debug("<<< Sending on Acknowledgement channel")
 				t.ack <- msg
 			case User:
-				fmt.Printf("<<< Received User (has joined the game): %+v\n", message)
+				slog.Debug(fmt.Sprintf("<<< Received User (has joined the game): %+v", message))
 			case Presence:
-				fmt.Printf("<<< Received Presence (online/offline): %+v\n", message)
+				slog.Debug(fmt.Sprintf("<<< Received Presence (online/offline): %+v", message))
 			case GameState:
-				fmt.Printf("<<< Received GameState: %+v\n", message)
-				fmt.Printf("<<< Sending on Events channel\n")
+				slog.Debug(fmt.Sprintf("<<< Received GameState: %+v", message))
+				slog.Debug("<<< Sending on Events channel")
 				t.events <- msg
 			default:
-				fmt.Printf("<<< Received message: %+v\n", message)
+				slog.Debug(fmt.Sprintf("<<< Received message: %+v", message))
 			}
 		}
 

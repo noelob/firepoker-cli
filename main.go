@@ -3,12 +3,31 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 )
 
+const logFile = "fp.log"
+
 func main() {
+	log, err := initLogging()
+	defer func() {
+		if log != nil {
+			_ = log.Close()
+		}
+	}()
+	defer func() {
+		if err := recover(); err != nil {
+			slog.Error("Boom! firepoker-cli init failed", "error", err)
+			slog.Error("", "stack", string(debug.Stack()))
+			fmt.Printf("%s", "Boom!")
+			fmt.Printf("%v.\n", err)
+		}
+	}()
+
 	flag.Parse()
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
@@ -19,7 +38,7 @@ func main() {
 	game := NewGame()
 	defer game.Leave()
 
-	err := game.Join(gameId)
+	err = game.Join(gameId)
 	if err != nil {
 		msg := fmt.Sprintf("Unable to join the game: %v", err)
 		fmt.Println(msg)
@@ -33,6 +52,23 @@ func main() {
 
 	// Wait until the user closes the application
 	//wait()
+}
+
+func initLogging() (*os.File, error) {
+	l, err := os.OpenFile(
+		logFile,
+		os.O_CREATE|os.O_APPEND|os.O_WRONLY,
+		0600,
+	)
+	if err != nil {
+		fmt.Errorf("log file %q init failed: %w", l, err)
+	}
+
+	slog.SetDefault(slog.New(slog.NewTextHandler(l, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	})))
+
+	return l, err
 }
 
 func wait() {

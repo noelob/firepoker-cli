@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 )
 
 type Game struct {
@@ -44,7 +45,7 @@ func (g *Game) Join(id string) error {
 }
 
 func (g *Game) Leave() error {
-	fmt.Println("Leaving the game")
+	slog.Info("Leaving the game")
 
 	// This cancels all derived contexts (i.e. sending and receiving messages)
 	g.ctxCancel()
@@ -54,10 +55,10 @@ func (g *Game) Leave() error {
 }
 
 func update(g *Game) {
-	fmt.Println("Waiting for game updates")
+	slog.Debug("Waiting for game updates")
 	for event := range g.events {
-		fmt.Println("Game update received, updating...")
+		slog.Info("Game update received, updating...")
 		g.state = event
 	}
-	fmt.Println("Update channel closed")
+	slog.Debug("Update channel closed")
 }

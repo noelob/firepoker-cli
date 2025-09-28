@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"iter"
+	"log/slog"
 	"maps"
 	"reflect"
 	"regexp"
@@ -110,8 +110,7 @@ func ParseMessage(data []byte) (any, error) {
 	var frame Frame
 	err := json.Unmarshal(data, &frame)
 	if err != nil {
-		msg := fmt.Sprintf("<<< Unable to parse frame: %v", err)
-		fmt.Println(msg)
+		slog.Warn("<<< Unable to parse frame: %v", err)
 	} else {
 		switch frame.Type {
 		case "c": // control
@@ -126,39 +125,37 @@ func ParseMessage(data []byte) (any, error) {
 }
 
 func parseControlFrame(data []byte) (any, error) {
-	fmt.Printf("<<< this is a control frame\n")
+	slog.Debug("<<< this is a control frame\n")
 	var ctlFrame ControlFrame
 	//fmt.Printf("<<< Raw JSON: '%s'\n", string(frame.Data))
 	err := json.Unmarshal(data, &ctlFrame)
 	if err != nil {
-		fmt.Printf("<<< Unable to parse control frane: %v\n", err)
+		slog.Error("<<< Unable to parse control frane: %v", err)
 		return nil, err
 	}
 
 	switch ctlFrame.Type {
 	case "h": //handshake
-		fmt.Printf("<<<< this is a handshake\n")
+		slog.Debug("<<<< this is a handshake")
 		var handshake Handshake
-		//fmt.Printf("<<< Raw JSON: '%s'\n", string(frame.Data))
 		err = json.Unmarshal(ctlFrame.Data, &handshake)
 		if err != nil {
-			fmt.Printf("<<<< Unable to parse handshake: %v\n", err)
+			slog.Warn("<<<< Unable to parse handshake: %v", err)
 			return nil, err
 		}
 
 		return handshake, nil
-		//fmt.Printf("<<<< handshake data: %#v\n\n", handshake)
 	}
 
 	return nil, ErrUnknownMessage
 }
 
 func parseDataFrame(data []byte) (any, error) {
-	fmt.Printf("<<< this is a data frame\n")
+	slog.Debug("<<< this is a data frame")
 	var dataFrame DataFrame
 	err := json.Unmarshal(data, &dataFrame)
 	if err != nil {
-		fmt.Printf("<<< Unable to parse data frame: %v\n", err)
+		slog.Error("<<< Unable to parse data frame: %v", err)
 		return nil, err
 	}
 
@@ -167,7 +164,7 @@ func parseDataFrame(data []byte) (any, error) {
 		ack := Acknowledgement{Ref: dataFrame.Ref}
 		err := json.Unmarshal(dataFrame.Body, &ack)
 		if err != nil {
-			fmt.Printf("<<< Unable to parse ack frame: %v\n", err)
+			slog.Error("<<< Unable to parse ack frame: %v", err)
 			return nil, err
 		} else {
 			return ack, nil
@@ -176,14 +173,14 @@ func parseDataFrame(data []byte) (any, error) {
 
 	// Need to check if there's a body?
 	if dataFrame.Data != nil {
-		fmt.Printf("THERE IS INNER FRAME DATA\n")
+		slog.Info("THERE IS INNER FRAME DATA")
 	}
 
 	if dataFrame.Body != nil {
 		var body Body
 		err := json.Unmarshal(dataFrame.Body, &body)
 		if err != nil {
-			fmt.Printf("<<< Unable to parse body: %v\n", err)
+			slog.Error("<<< Unable to parse body: %v", err)
 			return nil, err
 		}
 
@@ -203,7 +200,6 @@ func parseDataFrame(data []byte) (any, error) {
 		case gamePattern.MatchString(prop):
 			return parseGame(body.D)
 		}
-
 	}
 
 	return nil, ErrUnknownMessage
@@ -213,7 +209,7 @@ func parseParticipant(data []byte) (User, error) {
 	var user User
 	err := json.Unmarshal(data, &user)
 	if err != nil {
-		fmt.Printf("<<< Unable to parse user: %v\n", err)
+		slog.Error("<<< Unable to parse user: %v", err)
 		return User{}, err
 	}
 	return user, nil
@@ -234,7 +230,7 @@ func parsePresence(path string, data []byte) (Presence, error) {
 	} else {
 		ts, err := strconv.Atoi(a)
 		if err != nil {
-			fmt.Printf("<<< Unable to parse presence timestamp: %v\n", err)
+			slog.Error("<<< Unable to parse presence timestamp: %v", err)
 		} else {
 			presence.LastSeen = time.Unix(int64(ts), 0)
 		}
@@ -248,7 +244,7 @@ func parseGame(data []byte) (any, error) {
 	var gameState GameState
 	err := json.Unmarshal(data, &gameState)
 	if err != nil {
-		fmt.Printf("<<< Unable to parse gameState struct: %v\n", err)
+		slog.Error("<<< Unable to parse gameState struct: %v", err)
 	}
 
 	if !reflect.DeepEqual(gameState, GameState{}) {
@@ -262,7 +258,7 @@ func parseGame(data []byte) (any, error) {
 	// Unmarshal the JSON string (converted to byte slice) into the map
 	err = json.Unmarshal(data, &props)
 	if err != nil {
-		fmt.Println("<<< Unable to parse gameState map", err)
+		slog.Error("<<< Unable to parse gameState map", err)
 		return GameState{}, err
 	}
 
